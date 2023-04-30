@@ -14,6 +14,11 @@
 			<ValidationSummary />
 		</label>
 		<label class="d-grid">
+			<strong>Room</strong>
+			<InputNumber id="room" @bind-Value="_loginRequest.Room" />
+			<ValidationSummary />
+		</label>
+		<label class="d-grid">
 			<strong>API Key</strong>
 			<InputText id="key" @bind-Value="_loginRequest.ApiKey" />
 			<ValidationSummary />
