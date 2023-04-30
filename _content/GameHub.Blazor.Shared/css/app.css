@@ -1,0 +1,172 @@
+@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
+
+html, body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    overflow: hidden;
+}
+
+.bg-div {
+    height: 100vh;
+    width: 100vw;
+    background-size: cover;
+    background-position: center;
+}
+
+.bg-gameboard {
+    height: 100vh;
+    width: 100vw;
+    background-size: cover;
+    background-position: center;
+}
+
+.play-card {
+    aspect-ratio: 2 / 3;
+    border: 4px solid hsl(218.13deg 50.53% 37.25%);
+    background-size: cover;
+    background-position: center;
+    transform: scale(.9);
+    transition: transform ease-in-out .1s;
+    border-radius: 40px;
+    cursor: pointer;
+}
+
+.play-card-small {
+    border-radius: 20px;
+}
+
+.play-card:hover {
+    transform: scale(1.2);
+    z-index: 100;
+}
+
+.pill-selector {
+    transform: scale(1);
+    user-select: none;
+    cursor: pointer;
+    transition: transform .2s ease-in-out;
+    border-radius: 10px;
+    width: max-content;
+    font-size: .9em;
+}
+
+.pill-selector-player {
+    background-color: hsl(130 30% 40%);
+}
+
+.pill-selector-card {
+    display: flex;
+    align-items: center;
+    background-color: hsl(230 40% 40%);
+}
+
+    .pill-selector-card > strong {
+        display: grid;
+        margin-left: -6px;
+        margin-right: 4px;
+        place-items: center;
+        color: hsl(230 40% 40%);
+        background-color: white;
+        width: 20px;
+        height: 20px;
+        border-radius: 10px;
+    }
+
+    .pill-selector-player.active {
+        background-color: hsl(130 70% 50%);
+    }
+
+.pill-selector-card.active {
+    background-color: hsl(230 70% 50%);
+}
+
+.pill-selector:hover {
+    transform: scale(1.2);
+}
+
+
+h1,h2,h3,h4,h5,h6,li,ul,label,p {
+    margin: 0;
+    padding: 0;
+}
+
+ul,ol {
+    list-style: none;
+}
+
+h1:focus {
+    outline: none;
+}
+
+a {
+    color: #0071c1;
+}
+
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid #26b050;
+}
+
+.invalid {
+    outline: 1px solid red;
+}
+
+.validation-message {
+    color: red;
+}
+
+#blazor-error-ui {
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }
+
+.metrics-table {
+    font-size: .9em;
+}
+
+.metrics-table > div {
+    border: 1px solid #eee;
+    display: grid; 
+    align-content: center;
+    justify-items: center;
+    text-align: center;
+    padding: .3em .5em;
+}
+
+.metric-out {
+    background-color: lightpink;
+    color: darkred;
+}
+
+.metric-in {
+    background-color: lightgreen;
+    color: darkgreen;
+}
+
+.bullet-number {
+    background-color: hsl(200 30% 20%);
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 100%;
+    color: white;
+}
+
+.config-instructions li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    margin-top: 1em;
+}

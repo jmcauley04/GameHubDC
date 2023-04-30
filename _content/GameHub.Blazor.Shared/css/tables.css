@@ -1,0 +1,32 @@
+table {
+    font-size: .7em;
+}
+
+table thead tr {
+    background-color: #333;
+    color: white;
+}
+
+table tbody tr:nth-child(2n+1) {
+    background-color: #eee;
+}
+
+table tbody tr:hover {
+    background-color: #ddd;
+}
+
+table th, table td {
+    padding: .2em 2em;
+    margin: 0;
+    text-align: center;
+}
+
+table input {
+    background-color: transparent; 
+    border: none; 
+    width: 100%;
+}
+
+table.table-min-padding th, table.table-min-padding td {
+    padding: .2em .5em;
+}

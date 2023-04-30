@@ -1,0 +1,79 @@
+.btn {
+    border: none;
+    border-radius: 3px;
+    padding: .3em .5em;
+    cursor: pointer;
+}
+
+.btn:active {
+    background-color: green!important;
+}
+
+.btn-link {    
+    color: #1b6ec2;
+    background-color: transparent;
+    box-shadow: none;
+}
+
+.btn-link:hover {
+    color: #00468c;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #1b6ec2;
+}
+
+.btn-primary:hover {
+    background-color: #0865c1;
+}
+
+.btn-primary-outline {
+    color: #1b6ec2;
+    background-color: transparent;
+}
+
+.btn-primary-outline:hover {
+    background-color: rgb(8, 99, 191,.1);
+}
+
+.btn-primary:disabled {
+    color: #ccc;
+    background-color: #80a1c2;
+}
+
+.btn-secondary {
+    color: #fff;
+    background-color: #494949;
+}
+
+.btn-secondary:hover {
+    background-color: #353535;
+}
+
+.btn-secondary:disabled {
+    color: #ccc;
+    background-color: #828282;
+}
+
+.btn-secondary-outline {
+    color: #494949;
+    background-color: transparent;
+}
+
+.btn-primary-outline:hover {
+    background-color: rgb(73, 73, 73,.1);
+}
+
+.oi-excel-btn {
+    color: hsl(150, 30%, 40%);
+    font-size: 1.5em;
+    transform: scale(.8, .8);
+    transition: ease-in-out transform .15s;
+    cursor: pointer;
+}
+
+.oi-excel-btn:hover {
+    color: hsl(150, 40%, 60%);
+    transform: scale(1, 1);
+}
