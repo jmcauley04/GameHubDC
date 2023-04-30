@@ -11,17 +11,17 @@
 		<label class="d-grid">
 			<strong>Name</strong>
 			<InputText id="name" @bind-Value="_loginRequest.Name" />
-			<ValidationSummary />
+			<ValidationMessage For="() => _loginRequest.Name" />
 		</label>
 		<label class="d-grid">
 			<strong>Room</strong>
 			<InputNumber id="room" @bind-Value="_loginRequest.Room" />
-			<ValidationSummary />
+			<ValidationMessage For="() => _loginRequest.Room" />
 		</label>
 		<label class="d-grid">
 			<strong>API Key</strong>
 			<InputText id="key" @bind-Value="_loginRequest.ApiKey" />
-			<ValidationSummary />
+			<ValidationMessage For="() => _loginRequest.ApiKey" />
 		</label>
 		<button type="submit" class="btn btn-success" style="place-self: center; min-width: 300px;">Submit</button>
 	</div>
@@ -51,19 +51,15 @@
 		try
 		{
 			if (!string.IsNullOrEmpty(_loginRequest.ApiKey)) MongoDbService.SetAPIKey(_loginRequest.ApiKey);
+			//Console.WriteLine("Trying API Endpoint");
+			//Console.WriteLine(await DataService.Test());
+			//Console.WriteLine("Finished API Endpoint");
 			await DataService.JoinRoom(_loginRequest.Room, _loginRequest.Name);
 			if (OnLogin.HasDelegate) await OnLogin.InvokeAsync((_loginRequest.Name, _loginRequest.Room));
 		} catch(Exception ex)
 		{
-			if (ex.Message.Contains("PK_GameHub_RoomPeople"))
-			{
-				if (OnLogin.HasDelegate) await OnLogin.InvokeAsync((_loginRequest.Name, _loginRequest.Room));
-			}
-			else
-			{
-				if (OnException.HasDelegate) await OnException.InvokeAsync(ex);
-				else throw;
-			}
+			if (OnException.HasDelegate) await OnException.InvokeAsync(ex);
+			else throw;			
 		}
 	}
 

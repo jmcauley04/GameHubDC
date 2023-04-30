@@ -15,6 +15,13 @@ public class DataService
 		_mongoDbService = mongoDbService;
 	}
 
+	public async Task<string> Test()
+	{
+		await _mongoDbService.TestGet();
+		await _mongoDbService.TestPost();
+		return "";
+	}
+
 	public async Task<GameState> TryMakeRoom(int roomId)
 	{
 		var gameState = await GetRoom(roomId);
@@ -55,12 +62,10 @@ public class DataService
 	{
 		var stateString = _mock ?
 			(roomId == 1 ? mockRoom : null) :
-			await _mongoDbService.FindOne(RoomFilter(roomId));
+			await _mongoDbService.FindOne(roomId);
 
 		if (stateString is null) return new();
-		var document = System.Text.Json.JsonSerializer.Deserialize<Document>(stateString);
-		if (document?.document is null) return new();
-		return document.document;
+		return System.Text.Json.JsonSerializer.Deserialize<GameState>(stateString);
 	}
 
 	public async Task Save(GameState gameState)
@@ -73,24 +78,14 @@ public class DataService
 				document = gameState
 			};
 			mockRoom = System.Text.Json.JsonSerializer.Serialize(doc);
-			Console.WriteLine(mockRoom);
 		}
 		else
 			await _mongoDbService.UpsertOne(
-					RoomFilter(gameState.Room),
+					gameState.Room,
 					System.Text.Json.JsonSerializer.Serialize(gameState)
 				);
 
 	}
-	//string mockRoom = @"
-	//	{""document"": {
-	//		""_id"":""644cef8de43033961f0121b1"",
-	//		""Room"":1,
-	//		""Deck"":[1],
-	//		""Log"":[],
-	//		""Players"":[],
-	//		""Turn"":""""
-	//	}}";
 	string mockRoom = @"
 		{""document"": null}";
 }
