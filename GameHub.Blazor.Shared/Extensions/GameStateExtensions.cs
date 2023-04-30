@@ -20,7 +20,7 @@ public static class GameStateExtensions
 			player.Hand.RemoveAt(0);
 		}
 
-		gameState.AddLog($"{player.Name} is out");
+		gameState.AddLog($"{player.Name} is out.");
 
 		if (gameState.Turn == player.Name)
 			gameState.Pass(player);
@@ -39,7 +39,7 @@ public static class GameStateExtensions
 			gameState.Turn = inPlayers[turnIndex].Name;
 		}
 
-		gameState.AddLog($"{gameState.Turn}'s turn begins");
+		gameState.AddLog($"{gameState.Turn}'s turn begins.");
 	}
 
 	public static void ShuffleAndDeal(this GameState gameState, Player player)
@@ -66,7 +66,7 @@ public static class GameStateExtensions
 		}
 
 		gameState.Deck = shuffledDeck;
-		gameState.AddLog($"{player.Name} has shuffled, removed one card from the game, and dealt one card to each player");
+		gameState.AddLog($"{player.Name} has shuffled, removed one card from the game, and dealt one card to each player.");
 	}
 
 	public static void DiscardCard(this GameState gameState, Player player, int card)
@@ -87,7 +87,7 @@ public static class GameStateExtensions
 	public static void DrawCard(this GameState gameState, Player player)
 	{
 		if (gameState.Deck.Count == 0) return;
-		gameState.AddLog($"{player.Name} drew a card");
+		gameState.AddLog($"{player.Name} drew a card.");
 		player.Hand.Add(gameState.Deck[0]);
 		gameState.Deck.RemoveAt(0);
 	}

@@ -3,6 +3,7 @@
 @using GameHub.Blazor.Shared.Services;
 @inject DataService DataService
 @inject MongoDbService MongoDbService
+@implements IDisposable
 
 @if (_loginState is null)
 {
@@ -22,7 +23,7 @@
 }
 else
 {
-	@if (_gameState is null)
+	@if (_gameState is null || _loginState is null || !_gameState.Players.Any(x => x.Name == _loginState.Value.PlayerName))
 	{
 		<p>Loading...</p>
 	}
@@ -31,40 +32,45 @@ else
 		<div class="bg-gameboard position-relative d-grid" style="background-image: url(_content/GameHub.Blazor.Shared/images/gameboard-bg.jpg);">
 			<div class="text-light p-2 d-grid align-items-start" style="background-color: hsla(0, 0%, 0%, .6); width: 100%; height: 100%; grid-template-rows: auto auto 1fr auto;">
 				<div class="d-flex gap-5 align-items-start">
-					<div class="d-grid gap-1">
-						@if (Player.Out)
-						{
-							<h4><del class="text-danger">@Player.Name</del></h4>
-						}
-						else
-						{
-							<h4>@Player.Name</h4>
-						}
+					<div class="d-grid gap-1" style="width: 300px;">
+						<div @onclick="() => SelectPlayer(Player)" class="d-flex align-items-center" style="height: 1.5em; cursor:pointer; user-select: none;">
+							@if (Player.Out)
+							{
+								<h4>
+									<del class="text-danger">@Player.Name</del>
+								</h4>
+							}
+							else
+							{
+								<h4>
+									@Player.Name
+								</h4>
+							}
+							@if (_targetPlayer == Player.Name)
+							{
+								<span class="px-3 oi oi-target text-danger"></span>
+							}
+						</div>
 						<button @onclick="OnDeal" class="btn btn-success">Deal</button>
 					</div>
 					<div class="flex-grow-1 px-4" style="height: 200px; background-color: rgba(0,0,0,.5)">
-						<h5 class="text-center"><strong>Room:</strong> @_gameState.Room, <strong>Turn:</strong> @_gameState.Turn, <strong>Deck:</strong> @_gameState.Deck.Count</h5>
+						<div class="d-flex">
+							<h5 class="text-center flex-grow-1"><strong>Room:</strong> @_gameState.Room, <strong>Turn:</strong> @_gameState.Turn, <strong>Deck:</strong> @_gameState.Deck.Count</h5>
+							<div><img style="height: 3em;" src="_content/GameHub.Blazor.Shared/images/loveletter/title.png" /></div>
+						</div>
 						@foreach(var log in _gameState.Log)
 						{
 							<p>@log</p>	
 						}
 					</div>
-					<button class="btn btn-danger" @onclick="async () => await _loginBox!.Logout()">Logout</button>
+					<button class="btn btn-danger" style="width: 300px;" @onclick="async () => await _loginBox!.Logout()">Logout</button>
 				</div>
-				<div class="d-grid" style="grid-template-columns: 300px 1fr 1fr 300px;">
+				<div class="d-grid mt-3" style="grid-template-columns: 300px 1fr 300px;">
 					<div></div>
 					<div class="d-grid gap-2">
-						<h5>Selections</h5>
-						<ul class="d-flex gap-2">
-							<li><strong>PLAYERS</strong></li>
-							@foreach(var player in _gameState.Players)
-							{
-								<li @onclick="() => SelectPlayer(player)" class="px-2 pill-selector pill-selector-player @(player.Name == _targetPlayer ? "active" : "")">@player.Name</li>
-							}
-						</ul>
-						<ul class="d-flex gap-2">
-							<li><strong>CARDS</strong></li>
-							@foreach (var card in Cards)
+						<h5>Accountability Target</h5>
+						<ul class="d-flex flex-wrap gap-2">
+							@foreach (var card in Cards.Where(x => x.Value > 1))
 							{
 								<li @onclick="() => SelectCard(card.Value)" class="px-2 pill-selector pill-selector-card @(card.Value == _targetCard ? "active" : "")"><strong>@card.Value</strong> @card.Key</li>
 							}
@@ -104,21 +110,28 @@ else
 									<Card Value="@value" Shown="false" Small="true" />
 								}
 							</div>
-							@if (player.Out)
-							{
-								<del class="text-danger">@player.Name</del>
-							}
-							else
-							{
-								<div>@player.Name</div>								
-							}
+
+							<div @onclick="() => SelectPlayer(player)" class="d-flex align-items-center" style="height: 1.5em; cursor:pointer; user-select: none;">
+								@if (player.Out)
+								{
+									<del class="text-danger">@player.Name</del>
+								}
+								else
+								{
+									<div>@player.Name</div>
+								}
+								@if (_targetPlayer == player.Name)
+								{
+									<span class="px-3 oi oi-target text-danger"></span>
+								}
+							</div>
 						</div>
 					}
 				</div>
 			</div>
 		</div>
 
-		@if(_gameState.Players.Count(x => !x.Out) <= 1)
+		@if(_gameState.Players.Count(x => !x.Out) == 1)
 		{
 			<div class="text-dark position-absolute px-3 py-2 m-5" style="background-color: rgba(55,255,55,.9); border-radius: 10px; z-index: 10; top:19%; left: 30%; right: 30%;">
 				<h4>--WINNER--</h4>
@@ -126,6 +139,19 @@ else
 					@(_gameState.Players.SingleOrDefault(x => !x.Out)?.Name ?? _gameState.Turn) has won the round!
 				</p>
 			</div>
+		}
+
+		@if(_message is not null)
+		{
+			<div class="text-dark position-absolute px-3 py-2 m-5" style="background-color: rgba(255,255,255,.9); border-radius: 10px; z-index: 10; top:39%; left: 30%; right: 30%;">
+				<div class="d-flex">
+					<h4 class="flex-grow-1">Message</h4>
+					<span @onclick="CloseMessage" class="oi oi-x"></span>
+				</div>
+				<p>
+					@_message
+				</p>
+			</div>			
 		}
 	}
 }
@@ -138,12 +164,14 @@ else
 }
 
 @code {
+	string? _message;
 	string? _targetPlayer;
 	int? _targetCard;
 	int? _playedCard;
 
 	Dictionary<string, int> Cards = new()
 	{
+		{"Accountability", 1},
 		{"Auditor", 2},
 		{"Project Manager", 3},
 		{"Program Team Member", 4},
@@ -160,7 +188,7 @@ else
 	GameState _gameState = new();
 
 	(string PlayerName, int Room)? _loginState;
-	Player Player => _gameState!.Players.Single(x => x.Name == PlayerName);
+	Player? Player => _gameState?.Players.Single(x => x.Name == PlayerName);
 	string PlayerName => _loginState!.Value.PlayerName;
 	int Room => _loginState!.Value.Room;
 	List<int> Deck => _gameState!.Deck;
@@ -195,11 +223,14 @@ else
 		else
 		{
 			await RefreshGameState();
-			_timer = new(2500);
+			_timer = new(3000);
 			_timer.Elapsed += async (s,e) => await RefreshGameState();
 			_timer.Start();
 		}
 	}
+
+	void SetMessage(string message) => _message = message;
+	void CloseMessage() => _message = null;
 
 	async Task RefreshGameState()
 	{
@@ -208,9 +239,12 @@ else
 		{
 			if (_loginState is null) return;
 			_gameState = await DataService.GetRoom(_loginState.Value.Room);
-			Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(_gameState));
 			_enabled = true;
 			await InvokeAsync(StateHasChanged);
+		}
+		catch (Exception ex)
+		{
+			OnException(ex);
 		}
 		finally
 		{
@@ -222,7 +256,7 @@ else
 	{
 		if (Player.Name != _gameState.Turn || Player.Hand.Count > 1)
 		{
-			OnException(new Exception("Can only draw a card on your turn when you have only one card"));
+			SetMessage("Can only draw a card on your turn when you have only one card");
 			return;
 		}
 		await semaphoreSlim.WaitAsync();
@@ -234,6 +268,10 @@ else
 				await DataService.Save(_gameState);
 			}			
 		}
+		catch (Exception ex)
+		{
+			OnException(ex);
+		}
 		finally
 		{
 			semaphoreSlim.Release();
@@ -242,11 +280,20 @@ else
 
 	async Task OnDeal()
 	{
+		if(_gameState.Players.Count <= 1)
+		{
+			SetMessage("More than 1 player required to deal");
+			return;
+		}
 		await semaphoreSlim.WaitAsync();
 		try
 		{
 			_gameState.ShuffleAndDeal(Player);
 			await DataService.Save(_gameState);
+		}
+		catch (Exception ex)
+		{
+			OnException(ex);
 		}
 		finally
 		{
@@ -269,12 +316,12 @@ else
 	{
 		if (Player.Name != _gameState.Turn || Player.Hand.Count != 2)
 		{
-			OnException(new Exception("Can only play a card on your turn turn and while you have two cards"));
+			SetMessage("Can only play a card on your turn turn and while you have two cards");
 			return;
 		}
 		if(new int[] { 5,6 }.Contains(card) && Player.Hand.Any(x => x == 7))
 		{
-			OnException(new Exception("You must play the Operations Manager"));
+			SetMessage("You must play the Operations Manager when you're also holding the Quality Manager or General Manager");
 			return;
 		}
 
@@ -289,7 +336,7 @@ else
 				case 1:
 					if (targetPlayer is null || _targetCard is null)
 					{
-						OnException(new Exception("Must select a player and card to hold accountable."));
+						SetMessage("Must select a player and card to hold accountable.");
 						return;
 					}
 					if (targetPlayer.Protected)
@@ -305,7 +352,7 @@ else
 				case 2:
 					if (targetPlayer is null)
 					{
-						OnException(new Exception("Must select a player to audit."));
+						SetMessage("Must select a player to audit.");
 						return;
 					}
 					if (targetPlayer.Protected)
@@ -313,13 +360,14 @@ else
 					else
 					{
 						_gameState.AddLog($"{PlayerName} audits {targetPlayer.Name}'s hand.");
-						OnException(new Exception($"{targetPlayer.Name} has the [{targetPlayer.Hand[0]}] card.")); //TODO: Make this message better
+						var cardDetails = Cards.Single(x => x.Value == targetPlayer.Hand[0]);
+						SetMessage($"{targetPlayer.Name} has the {cardDetails.Key} card.");
 					}
 					break;
 				case 3:
 					if (targetPlayer is null)
 					{
-						OnException(new Exception("Must select a player to evaluate."));
+						SetMessage("Must select a player to evaluate.");
 						return;
 					}
 					var playerValue = Player.Hand.Any(x => x != 3) ? Player.Hand.SingleOrDefault(x => x != 3) : 3;
@@ -345,7 +393,7 @@ else
 				case 5:
 					if (targetPlayer is null)
 					{
-						OnException(new Exception("Must select a player to inspect."));
+						SetMessage("Must select a player to inspect.");
 						return;
 					}
 					if (targetPlayer.Protected)
@@ -360,7 +408,7 @@ else
 				case 6:
 					if (targetPlayer is null)
 					{
-						OnException(new Exception("Must select a player to trade with."));
+						SetMessage("Must select a player to trade with.");
 						return;
 					}
 					if (targetPlayer.Protected)
@@ -377,10 +425,10 @@ else
 					}
 					break;
 				case 7:
-					_gameState.AddLog($"{PlayerName}'s has lost the Operation's Manager.");
+					_gameState.AddLog($"{PlayerName} has lost the Operation's Manager.");
 					break;
 				case 8:
-					_gameState.AddLog($"{PlayerName}'s laid out of work today.");
+					_gameState.AddLog($"{PlayerName} laid out of work today.");
 					_gameState.Fold(Player);
 					break;
 			}
@@ -389,9 +437,20 @@ else
 			await DataService.Save(_gameState);
 			await InvokeAsync(StateHasChanged);
 		}
+		catch (Exception ex)
+		{
+			OnException(ex);
+		}
 		finally
 		{
 			semaphoreSlim.Release();
 		}
+	}
+
+	void IDisposable.Dispose()
+	{
+		_timer?.Stop();
+		_timer?.Dispose();
+		_timer = null;
 	}
 }

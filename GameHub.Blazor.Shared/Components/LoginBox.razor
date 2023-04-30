@@ -5,6 +5,7 @@
 
 <EditForm Model="@_loginRequest" OnValidSubmit="Submit">
 	<div class="d-grid gap-5 py-4 px-5" style="border-radius: 15px; background: rgba(255,255,255,.9);">
+		<img style="width: 100%; transform: scale(1.2);" src="_content/GameHub.Blazor.Shared/images/loveletter/title.png" />
 		<h3>Login</h3>
 		<DataAnnotationsValidator />
 		<label class="d-grid">
@@ -27,7 +28,7 @@
 		[Required(ErrorMessage = "Name required")]
 		public string Name { get; set; } = string.Empty;
 
-		public int Room { get; set; }
+		public int Room { get; set; } = 1;
 
 		public string ApiKey { get; set; } = string.Empty;
 	}
@@ -45,7 +46,7 @@
 		try
 		{
 			if (!string.IsNullOrEmpty(_loginRequest.ApiKey)) MongoDbService.SetAPIKey(_loginRequest.ApiKey);
-			//await DataService.JoinRoom(_loginRequest.Room, _loginRequest.Name);
+			await DataService.JoinRoom(_loginRequest.Room, _loginRequest.Name);
 			if (OnLogin.HasDelegate) await OnLogin.InvokeAsync((_loginRequest.Name, _loginRequest.Room));
 		} catch(Exception ex)
 		{

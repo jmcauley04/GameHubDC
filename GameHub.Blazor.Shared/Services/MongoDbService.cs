@@ -9,6 +9,7 @@ public class MongoDbService
 	static string? APIKEY;
 	const string ENDPOINT = "https://us-east-2.aws.data.mongodb-api.com/app/data-giljf/endpoint/data/v1/action";
 
+
 	public static void SetAPIKey(string apiKey)
 	{
 		APIKEY = apiKey;
@@ -27,11 +28,11 @@ public class MongoDbService
 		public const string DELETEONE = "deleteOne";
 	}
 
-	class Body
+	static class DbConfig
 	{
-		public string Collection { get; set; } = "Rooms";
-		public string Database { get; set; } = "GameHub";
-		public string DataSource { get; set; } = "GameHub0";
+		public const string Collection = "Rooms";
+		public const string Database = "GameHub";
+		public const string DataSource = "GameHub0";
 	}
 
 	RestRequest GetRequest()
@@ -54,15 +55,14 @@ public class MongoDbService
 	{
 		var client = new RestClient(Path.Combine(ENDPOINT, Action.UPDATEONE));
 		var request = GetRequest($@"{{
-	""collection"":""Rooms"",
-	""database"":""GameHub"",
-	""dataSource"":""GameHub0"",
+	""collection"":""{DbConfig.Collection}"",
+	""database"":""{DbConfig.Database}"",
+	""dataSource"":""{DbConfig.DataSource}"",
 	""upsert"": true,
 	""filter"": {{ {filter} }},
 	""update"": {{ 
-		""$set"": {{
-			{update} 
-		}}
+		""$set"": 
+			{update} 		
 	}}
 }}");
 		RestResponse response = await client.PostAsync(request);
@@ -74,9 +74,9 @@ public class MongoDbService
 		var client = new RestClient(Path.Combine(ENDPOINT, Action.FINDONE));
 		var request = GetRequest($@"
 			{{
-			    ""collection"":""Rooms"",
-			    ""database"":""GameHub"",
-			    ""dataSource"":""GameHub0"",
+				""collection"":""{DbConfig.Collection}"",
+				""database"":""{DbConfig.Database}"",
+				""dataSource"":""{DbConfig.DataSource}"",
 			    ""filter"": {{ {filter} }}
 			}}");
 		RestResponse response = await client.PostAsync(request);
@@ -88,33 +88,12 @@ public class MongoDbService
 		var client = new RestClient(Path.Combine(ENDPOINT, Action.DELETEONE));
 		var request = GetRequest($@"
 			{{
-			    ""collection"":""Rooms"",
-			    ""database"":""GameHub"",
-			    ""dataSource"":""GameHub0"",
+				""collection"":""{DbConfig.Collection}"",
+				""database"":""{DbConfig.Database}"",
+				""dataSource"":""{DbConfig.DataSource}"",
 			    ""filter"": {{ {filter} }}
 			}}");
 		RestResponse response = await client.PostAsync(request);
 		return response.Content;
-	}
-
-	public async Task Test()
-	{
-		var document = @"
-			""Players"": {
-				""Michael"": ""8_72"",
-				""Thomas"": ""4_12"",
-				""Locke"": ""7_34"",
-				""Jennifer"": ""4_256""
-			},
-			""Deck"": ""1231"",
-			""Turn"": ""Michael""
-			";
-		var filter = @"
-			""Room"": 1
-			";
-
-		await UpsertOne(filter, document);
-		await FindOne(filter);
-		await DeleteOne(filter);
 	}
 }

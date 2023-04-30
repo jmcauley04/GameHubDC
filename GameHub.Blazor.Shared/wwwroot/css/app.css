@@ -28,6 +28,7 @@ html, body {
     transition: transform ease-in-out .1s;
     border-radius: 40px;
     cursor: pointer;
+    box-shadow: #ccc 0px 0px 1px 0px;
 }
 
 .play-card-small {
@@ -37,6 +38,7 @@ html, body {
 .play-card:hover {
     transform: scale(1.2);
     z-index: 100;
+    box-shadow: #000 1px 1px 15px 2px;
 }
 
 .pill-selector {
