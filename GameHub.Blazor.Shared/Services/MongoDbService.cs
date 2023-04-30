@@ -99,19 +99,19 @@ public class MongoDbService
 
 	public async Task Test()
 	{
-		var document = """
-			"Players": {
-				"Michael": "8_72",
-				"Thomas": "4_12",
-				"Locke": "7_34",
-				"Jennifer": "4_256"
+		var document = @"
+			""Players"": {
+				""Michael"": ""8_72"",
+				""Thomas"": ""4_12"",
+				""Locke"": ""7_34"",
+				""Jennifer"": ""4_256""
 			},
-			"Deck": "1231",
-			"Turn": "Michael"
-			""";
-		var filter = """
-			"Room": 1
-			""";
+			""Deck"": ""1231"",
+			""Turn"": ""Michael""
+			";
+		var filter = @"
+			""Room"": 1
+			";
 
 		await UpsertOne(filter, document);
 		await FindOne(filter);
