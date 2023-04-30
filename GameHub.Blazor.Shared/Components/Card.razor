@@ -1,0 +1,48 @@
+﻿<div class="position-relative">
+	@if (Shown)
+	{
+		<div class="play-card @(Small ? "play-card-small" : "")" style="background-image: url(_content/GameHub.Blazor.Shared/images/loveletter/@(CardName).png); @Size" @onclick="Clicked">
+		</div>
+	}
+	else
+	{
+		<div class="play-card @(Small ? "play-card-small" : "")" style="background-image: url(_content/GameHub.Blazor.Shared/images/loveletter/a_back.png); @Size" @onclick="Clicked">
+		</div>	
+	}
+</div>
+
+@code {
+	[Parameter]
+	public EventCallback<int> OnClick { get; set; }
+
+	[Parameter]
+	public int Value { get; set; }
+
+	[Parameter]
+	public bool Shown { get; set; }
+
+	[Parameter]
+	public bool Small { get; set; }
+
+	string CardName => Value switch
+	{
+		0 => "a_rules",
+		1 => "a_1_guard",
+		2 => "a_2_priest",
+		3 => "a_3_baron",
+		4 => "a_4_handmaid",
+		5 => "a_5_prince",
+		6 => "a_6_king",
+		7 => "a_7_countess",
+		8 => "a_8_princess",
+		_ => throw new Exception("No card exists")
+	};
+
+	string Size => Small ? "height: 150px; width: 100px;" : "height: 300px; width: 200px;";
+
+	async Task Clicked()
+	{
+		if (OnClick.HasDelegate)
+			await OnClick.InvokeAsync(Value);
+	}
+}

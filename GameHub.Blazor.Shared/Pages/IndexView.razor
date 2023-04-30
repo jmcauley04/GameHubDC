@@ -1,0 +1,397 @@
+﻿@using GameHub.Blazor.Shared.Extensions;
+@using GameHub.Blazor.Shared.Models;
+@using GameHub.Blazor.Shared.Services;
+@inject DataService DataService
+@inject MongoDbService MongoDbService
+
+@if (_loginState is null)
+{
+	<div class="bg-div position-relative d-grid" style="background-image: url(_content/GameHub.Blazor.Shared/images/pool-bg-img.jpg);">
+		<div style="width: 30vw; place-self: center;">
+			<LoginBox @ref="_loginBox" OnLogin="OnLogin" OnException="OnException" />
+		</div>
+	</div>
+
+	<div class="position-absolute px-3 py-2 m-5" style="background-color: rgba(255,255,255,.7); border-radius: 10px; z-index: 1000;">
+		<h4>MachineName</h4>
+		<p>
+			@Environment.MachineName
+		</p>
+	</div>
+
+}
+else
+{
+	@if (_gameState is null)
+	{
+		<p>Loading...</p>
+	}
+	else
+	{
+		<div class="bg-gameboard position-relative d-grid" style="background-image: url(_content/GameHub.Blazor.Shared/images/gameboard-bg.jpg);">
+			<div class="text-light p-2 d-grid align-items-start" style="background-color: hsla(0, 0%, 0%, .6); width: 100%; height: 100%; grid-template-rows: auto auto 1fr auto;">
+				<div class="d-flex gap-5 align-items-start">
+					<div class="d-grid gap-1">
+						@if (Player.Out)
+						{
+							<h4><del class="text-danger">@Player.Name</del></h4>
+						}
+						else
+						{
+							<h4>@Player.Name</h4>
+						}
+						<button @onclick="OnDeal" class="btn btn-success">Deal</button>
+					</div>
+					<div class="flex-grow-1 px-4" style="height: 200px; background-color: rgba(0,0,0,.5)">
+						<h5 class="text-center"><strong>Room:</strong> @_gameState.Room, <strong>Turn:</strong> @_gameState.Turn, <strong>Deck:</strong> @_gameState.Deck.Count</h5>
+						@foreach(var log in _gameState.Log)
+						{
+							<p>@log</p>	
+						}
+					</div>
+					<button class="btn btn-danger" @onclick="async () => await _loginBox!.Logout()">Logout</button>
+				</div>
+				<div class="d-grid" style="grid-template-columns: 300px 1fr 1fr 300px;">
+					<div></div>
+					<div class="d-grid gap-2">
+						<h5>Selections</h5>
+						<ul class="d-flex gap-2">
+							<li><strong>PLAYERS</strong></li>
+							@foreach(var player in _gameState.Players)
+							{
+								<li @onclick="() => SelectPlayer(player)" class="px-2 pill-selector pill-selector-player @(player.Name == _targetPlayer ? "active" : "")">@player.Name</li>
+							}
+						</ul>
+						<ul class="d-flex gap-2">
+							<li><strong>CARDS</strong></li>
+							@foreach (var card in Cards)
+							{
+								<li @onclick="() => SelectCard(card.Value)" class="px-2 pill-selector pill-selector-card @(card.Value == _targetCard ? "active" : "")"><strong>@card.Value</strong> @card.Key</li>
+							}
+						</ul>
+					</div>
+				</div>
+				<div class="d-grid text-center gap-2" style="height: 300px; grid-template-columns: 240px 1fr 240px; align-self:center;">
+					<div class="d-grid justify-content-end">
+						<Card Value="0" Shown="true" />
+					</div>
+					<div class="d-flex justify-content-center" style="background-color: rgba(0,0,0,.5)">
+						@foreach (var value in Player.Played)
+						{
+							<Card Value="@value" Shown="true" Small="true" />
+						}
+						@foreach (var value in Player.Hand)
+						{
+							<Card Value="@value" Shown="true" OnClick="Play" />
+						}
+					</div>
+					<div class="d-grid">
+						<Deck Cards="@Deck" OnGetCard="OnDraw" />
+					</div>
+				</div>
+				<div class="d-flex justify-content-between mb-5 px-5">
+
+					@foreach (var player in OtherPlayers)
+					{
+						<div class="d-grid justify-content-center text-center">
+							<div class="d-flex justify-content-center align-items-end">
+								@foreach (var value in player.Played)
+								{
+									<Card Value="@value" Shown="true" Small="true" />
+								}
+								@foreach (var value in player.Hand)
+								{
+									<Card Value="@value" Shown="false" Small="true" />
+								}
+							</div>
+							@if (player.Out)
+							{
+								<del class="text-danger">@player.Name</del>
+							}
+							else
+							{
+								<div>@player.Name</div>								
+							}
+						</div>
+					}
+				</div>
+			</div>
+		</div>
+
+		@if(_gameState.Players.Count(x => !x.Out) <= 1)
+		{
+			<div class="text-dark position-absolute px-3 py-2 m-5" style="background-color: rgba(55,255,55,.9); border-radius: 10px; z-index: 10; top:19%; left: 30%; right: 30%;">
+				<h4>--WINNER--</h4>
+				<p>
+					@(_gameState.Players.SingleOrDefault(x => !x.Out)?.Name ?? _gameState.Turn) has won the round!
+				</p>
+			</div>
+		}
+	}
+}
+@if(_exception is not null)
+{
+	<div class="text-danger position-absolute px-3 py-2 m-5" style="background-color: rgba(255,255,255,.9); border-radius: 10px; z-index: 1000; top:19%;">
+		<h4>Exception encountered</h4>
+		<p>@_exception.GetType(): @_exception.Message</p>
+	</div>	
+}
+
+@code {
+	string? _targetPlayer;
+	int? _targetCard;
+	int? _playedCard;
+
+	Dictionary<string, int> Cards = new()
+	{
+		{"Auditor", 2},
+		{"Project Manager", 3},
+		{"Program Team Member", 4},
+		{"Quality Manager", 5},
+		{"General Manager", 6},
+		{"Operations Manager", 7},
+		{"Operator", 8},
+	};
+
+	SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
+	System.Timers.Timer? _timer;
+	LoginBox? _loginBox;
+	bool _enabled;
+	GameState _gameState = new();
+
+	(string PlayerName, int Room)? _loginState;
+	Player Player => _gameState!.Players.Single(x => x.Name == PlayerName);
+	string PlayerName => _loginState!.Value.PlayerName;
+	int Room => _loginState!.Value.Room;
+	List<int> Deck => _gameState!.Deck;
+	IEnumerable<Player> OtherPlayers => _gameState!.Players.Where(x => x.Name != PlayerName);
+
+	Exception? _exception;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await base.OnInitializedAsync();
+	}
+
+	void SelectPlayer(Player player)	
+		=> _targetPlayer = _targetPlayer == player.Name ? null : player.Name;
+
+	void SelectCard(int card)
+		=> _targetCard = _targetCard == card ? null : card;
+
+	string CardName(int? card)
+		=> Cards.SingleOrDefault(x => x.Value == card).Key;
+
+
+	async Task OnLogin((string PlayerName, int Room)? loginState)
+	{
+		_loginState = loginState;
+		if (_loginState is null)
+		{
+			_timer?.Stop();
+			_timer = null;
+			return;
+		}
+		else
+		{
+			await RefreshGameState();
+			_timer = new(2500);
+			_timer.Elapsed += async (s,e) => await RefreshGameState();
+			_timer.Start();
+		}
+	}
+
+	async Task RefreshGameState()
+	{
+		await semaphoreSlim.WaitAsync();
+		try
+		{
+			if (_loginState is null) return;
+			_gameState = await DataService.GetRoom(_loginState.Value.Room);
+			Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(_gameState));
+			_enabled = true;
+			await InvokeAsync(StateHasChanged);
+		}
+		finally
+		{
+			semaphoreSlim.Release();
+		}
+	}
+
+	async Task OnDraw(int card)
+	{
+		if (Player.Name != _gameState.Turn || Player.Hand.Count > 1)
+		{
+			OnException(new Exception("Can only draw a card on your turn when you have only one card"));
+			return;
+		}
+		await semaphoreSlim.WaitAsync();
+		try
+		{
+			if (_enabled)
+			{
+				_gameState.DrawCard(Player);
+				await DataService.Save(_gameState);
+			}			
+		}
+		finally
+		{
+			semaphoreSlim.Release();
+		}
+	}
+
+	async Task OnDeal()
+	{
+		await semaphoreSlim.WaitAsync();
+		try
+		{
+			_gameState.ShuffleAndDeal(Player);
+			await DataService.Save(_gameState);
+		}
+		finally
+		{
+			semaphoreSlim.Release();
+		}
+	}
+
+	void OnException(Exception ex)
+	{
+		Task.Run(async () =>
+		{
+			_exception = ex;
+			await Task.Delay(2000);
+			if (_exception == ex)
+				_exception = null;
+		});
+	}
+
+	async Task Play(int card)
+	{
+		if (Player.Name != _gameState.Turn || Player.Hand.Count != 2)
+		{
+			OnException(new Exception("Can only play a card on your turn turn and while you have two cards"));
+			return;
+		}
+		if(new int[] { 5,6 }.Contains(card) && Player.Hand.Any(x => x == 7))
+		{
+			OnException(new Exception("You must play the Operations Manager"));
+			return;
+		}
+
+		await semaphoreSlim.WaitAsync();
+		try
+		{			
+			Player.Protected = false;
+			var targetPlayer = _gameState.Players.SingleOrDefault(x => x.Name == _targetPlayer);
+
+			switch (card)
+			{
+				case 1:
+					if (targetPlayer is null || _targetCard is null)
+					{
+						OnException(new Exception("Must select a player and card to hold accountable."));
+						return;
+					}
+					if (targetPlayer.Protected)
+						_gameState.AddLog($"{PlayerName} tried to hold {targetPlayer.Name} accountable but {targetPlayer.Name} ignored {PlayerName}.");
+					else if (targetPlayer.Hand.Contains(_targetCard.Value))
+					{
+						_gameState.AddLog($"{PlayerName} holds {targetPlayer.Name} accountable for having {CardName(_targetCard)} and had to let them go.");
+						_gameState.Fold(targetPlayer);
+					}		
+					else
+						_gameState.AddLog($"{PlayerName} holds {targetPlayer.Name} accountable for having {CardName(_targetCard)} but was incorrect.");
+					break;
+				case 2:
+					if (targetPlayer is null)
+					{
+						OnException(new Exception("Must select a player to audit."));
+						return;
+					}
+					if (targetPlayer.Protected)
+						_gameState.AddLog($"{PlayerName} tried to audit {targetPlayer.Name} but {targetPlayer.Name} ignored {PlayerName}.");
+					else
+					{
+						_gameState.AddLog($"{PlayerName} audits {targetPlayer.Name}'s hand.");
+						OnException(new Exception($"{targetPlayer.Name} has the [{targetPlayer.Hand[0]}] card.")); //TODO: Make this message better
+					}
+					break;
+				case 3:
+					if (targetPlayer is null)
+					{
+						OnException(new Exception("Must select a player to evaluate."));
+						return;
+					}
+					var playerValue = Player.Hand.Any(x => x != 3) ? Player.Hand.SingleOrDefault(x => x != 3) : 3;
+					if (targetPlayer.Protected)
+						_gameState.AddLog($"{PlayerName} tried to evaluate {targetPlayer.Name}'s projects but {targetPlayer.Name} ignored {PlayerName}.");
+					else if (playerValue == targetPlayer.Hand[0])
+						_gameState.AddLog($"{PlayerName} evalutes the team's projects and finds {targetPlayer.Name}'s project to be of equal value to their own - all projects are kept.");
+					else if (playerValue > targetPlayer.Hand[0])
+					{
+						_gameState.AddLog($"{PlayerName} evalutes the team's projects and finds {targetPlayer.Name}'s project to be of lesser value than their own - {targetPlayer.Name}'s project is discontinued.");
+						_gameState.Fold(targetPlayer);
+					}
+					else if (playerValue < targetPlayer.Hand[0])
+					{
+						_gameState.AddLog($"{PlayerName} evalutes the team's projects and finds {targetPlayer.Name}'s project to be of greater value than their own - {PlayerName}'s project is discontinued.");
+						_gameState.Fold(Player);
+					}
+					break;
+				case 4:
+					_gameState.AddLog($"{PlayerName} gets super busy and ignores everyones input for a while.");
+					Player.Protected = true;
+					break;
+				case 5:
+					if (targetPlayer is null)
+					{
+						OnException(new Exception("Must select a player to inspect."));
+						return;
+					}
+					if (targetPlayer.Protected)
+						_gameState.AddLog($"{PlayerName} tried to inspect {targetPlayer.Name} for quality issues but {targetPlayer.Name} ignored {PlayerName}.");
+					else
+					{
+						_gameState.AddLog($"{PlayerName} finds a quality issue and requires {targetPlayer.Name} to get a new hand.");
+						_gameState.DiscardCard(targetPlayer, targetPlayer.Hand[0]);
+						_gameState.DrawCard(targetPlayer);
+					}
+					break;
+				case 6:
+					if (targetPlayer is null)
+					{
+						OnException(new Exception("Must select a player to trade with."));
+						return;
+					}
+					if (targetPlayer.Protected)
+						_gameState.AddLog($"{PlayerName} tried to restructure {targetPlayer.Name}'s role but {targetPlayer.Name} ignored {PlayerName}.");
+					else
+					{
+						_gameState.AddLog($"{PlayerName}'s final act as GM is to take {targetPlayer.Name}'s position and to move {targetPlayer.Name} into another role.");
+						var playerCard = Player.Hand[0] == 6 ? Player.Hand[1] : Player.Hand[0];
+						var otherCard = targetPlayer.Hand[0];
+						Player.Hand.Remove(playerCard);
+						targetPlayer.Hand.Remove(otherCard);
+						Player.Hand.Add(otherCard);
+						targetPlayer.Hand.Add(playerCard);
+					}
+					break;
+				case 7:
+					_gameState.AddLog($"{PlayerName}'s has lost the Operation's Manager.");
+					break;
+				case 8:
+					_gameState.AddLog($"{PlayerName}'s laid out of work today.");
+					_gameState.Fold(Player);
+					break;
+			}
+
+			_gameState.DiscardCard(Player, card);
+			await DataService.Save(_gameState);
+			await InvokeAsync(StateHasChanged);
+		}
+		finally
+		{
+			semaphoreSlim.Release();
+		}
+	}
+}

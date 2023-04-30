@@ -1,0 +1,75 @@
+﻿@using GameHub.Blazor.Shared.Services;
+@using Microsoft.AspNetCore.Components.Forms
+@using System.ComponentModel.DataAnnotations
+@inject DataService DataService
+
+<EditForm Model="@_loginRequest" OnValidSubmit="Submit">
+	<div class="d-grid gap-5 py-4 px-5" style="border-radius: 15px; background: rgba(255,255,255,.9);">
+		<h3>Login</h3>
+		<DataAnnotationsValidator />
+		<label class="d-grid">
+			<strong>Name</strong>
+			<InputText id="name" @bind-Value="_loginRequest.Name" />
+			<ValidationSummary />
+		</label>
+		<label class="d-grid">
+			<strong>API Key</strong>
+			<InputText id="key" @bind-Value="_loginRequest.ApiKey" />
+			<ValidationSummary />
+		</label>
+		<button type="submit" class="btn btn-success" style="place-self: center; min-width: 300px;">Submit</button>
+	</div>
+</EditForm>
+
+@code {
+	class LoginRequest
+	{
+		[Required(ErrorMessage = "Name required")]
+		public string Name { get; set; } = string.Empty;
+
+		public int Room { get; set; }
+
+		public string ApiKey { get; set; } = string.Empty;
+	}
+
+	[Parameter]
+	public EventCallback<(string Name, int Room)?> OnLogin { get; set; }
+
+	[Parameter]
+	public EventCallback<Exception> OnException { get; set; }
+
+	LoginRequest _loginRequest = new();
+
+	async Task Submit()
+	{
+		try
+		{
+			if (!string.IsNullOrEmpty(_loginRequest.ApiKey)) MongoDbService.SetAPIKey(_loginRequest.ApiKey);
+			//await DataService.JoinRoom(_loginRequest.Room, _loginRequest.Name);
+			if (OnLogin.HasDelegate) await OnLogin.InvokeAsync((_loginRequest.Name, _loginRequest.Room));
+		} catch(Exception ex)
+		{
+			if (ex.Message.Contains("PK_GameHub_RoomPeople"))
+			{
+				if (OnLogin.HasDelegate) await OnLogin.InvokeAsync((_loginRequest.Name, _loginRequest.Room));
+			}
+			else
+			{
+				if (OnException.HasDelegate) await OnException.InvokeAsync(ex);
+				else throw;
+			}
+		}
+	}
+
+	public async Task Logout()
+	{
+		try
+		{
+			if (OnLogin.HasDelegate) await OnLogin.InvokeAsync(null);
+		} catch(Exception ex)
+		{
+			if (OnException.HasDelegate) await OnException.InvokeAsync(ex);
+			else throw;
+		}
+	}
+}

@@ -1,0 +1,27 @@
+﻿
+<div class="position-relative w-100" @onclick="SendCard">
+	@if(Cards is not null)
+	{
+		@for(int i = 0; i < Cards.Count; i++)
+		{
+			<div class="position-absolute" style="top:@(i*.5)px; left:@(i*1)px; height: 300px; width: 200px;">
+				<Card Value="@Cards[i]" />
+			</div>
+		}		
+	}
+</div>
+
+@code {
+	[Parameter]
+	public List<int> Cards { get; set; } = new();
+
+	[Parameter]
+	public EventCallback<int> OnGetCard { get; set; }
+
+	public async Task SendCard()
+	{
+		if (!Cards.Any()) return;
+		var card = Cards[0];
+		if (OnGetCard.HasDelegate) await OnGetCard.InvokeAsync(card);
+	}
+}
