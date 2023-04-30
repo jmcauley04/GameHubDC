@@ -63,7 +63,35 @@ public class DataService
 			Console.WriteLine(mockRoom);
 		}
 	}
-	string mockRoom = """
-		{"document":{"_id":"644cef8de43033961f0121b1","Room":1,"Deck":[1,2,3,1],"Log":["Michael drew a card","Jennifer played the Auditor","Jennifer drew a card","Thomas is out","Locke played the Project Manager [Thomas]"],"Players":[{"Name":"Michael","Hand":[8,5],"Played":[7,2],"Out":false},{"Name":"Jennifer","Hand":[4],"Played":[2,5,6],"Out":false},{"Name":"Locke","Hand":[7],"Played":[3,4],"Out":false},{"Name":"Thomas","Hand":[],"Played":[4,1,2],"Out":true}],"Turn":"Michael"}}
-		""";
+	string mockRoom = @"
+		{""document"": {
+			""_id"":""644cef8de43033961f0121b1"",
+			""Room"":1,
+			""Deck"":[1,2,3,1],
+			""Log"":[
+				""Michael drew a card"",
+				""Jennifer played the Auditor"",
+				""Jennifer drew a card"",
+				""Thomas is out"",
+				""Locke played the Project Manager [Thomas]""
+			],
+			""Players"":[
+				{	""Name"":""Michael"",
+					""Hand"":[8,5],
+					""Played"":[7,2],""Out"":false
+				},{	""Name"":""Jennifer"",
+					""Hand"":[4],
+					""Played"":[2,5,6],
+					""Out"":false
+				},{	""Name"":""Locke"",
+					""Hand"":[7],
+					""Played"":[3,4],
+					""Out"":false
+				},{	""Name"":""Thomas"",
+					""Hand"":[],
+					""Played"":[4,1,2],
+					""Out"":true
+				}],
+			""Turn"":""Michael""
+		}}";
 }

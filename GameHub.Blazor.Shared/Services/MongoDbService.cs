@@ -39,7 +39,7 @@ public class MongoDbService
 		var request = new RestRequest();
 		request.AddHeader("Content-Type", "application/json");
 		request.AddHeader("Access-Control-Request-Headers", "*");
-		request.AddHeader("api-key", APIKEY);
+		request.AddHeader("api-key", APIKEY!);
 		return request;
 	}
 
