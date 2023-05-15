@@ -1,29 +1,63 @@
-﻿@using GameHub.Blazor.Shared.Services;
+﻿@using GameHub.Blazor.Shared.Models;
+@using GameHub.Blazor.Shared.Services;
 @using Microsoft.AspNetCore.Components.Forms
 @using System.ComponentModel.DataAnnotations
 @inject DataService DataService
 
-<EditForm Model="@_loginRequest" OnValidSubmit="Submit">
-	<div class="d-grid gap-5 py-4 px-5" style="border-radius: 15px; background: rgba(255,255,255,.9);">
-		<img style="width: 100%; transform: scale(1.2);" src="_content/GameHub.Blazor.Shared/images/loveletter/title.png" />
-		<h3>Login</h3>
-		<DataAnnotationsValidator />
-		<label class="d-grid">
-			<strong>Name</strong>
-			<InputText id="name" @bind-Value="_loginRequest.Name" />
-			<ValidationMessage For="() => _loginRequest.Name" />
-		</label>
-		<label class="d-grid">
-			<strong>Room</strong>
-			<InputNumber id="room" @bind-Value="_loginRequest.Room" />
-			<ValidationMessage For="() => _loginRequest.Room" />
-		</label>
-		<label class="d-grid">
-			<strong>API Key</strong>
-			<InputText id="key" @bind-Value="_loginRequest.ApiKey" />
-			<ValidationMessage For="() => _loginRequest.ApiKey" />
-		</label>
-		<button type="submit" class="btn btn-success" style="place-self: center; min-width: 300px;">Submit</button>
+<EditForm Model="@_loginRequest">	
+	<div class="d-grid justify-content-center align-content-center" style="place-self: center; height:100vh; margin: auto;">
+		@if (_formState == FormState.Name)
+		{
+			<div class="d-grid gap-5 py-4 px-5" style="width: 30vw; border-radius: 15px; background: rgba(255,255,255,.9);">
+				<img style="width: 100%; transform: scale(1.2);" src="_content/GameHub.Blazor.Shared/images/loveletter/title.png" />
+				<DataAnnotationsValidator />
+				<label class="d-grid">
+					<strong>Name</strong>
+					<InputText id="name" @bind-Value="_loginRequest.Name" />
+					<ValidationMessage For="() => _loginRequest.Name" />
+				</label>
+				<button class="btn btn-success" style="place-self: center; min-width: 300px;" @onclick="EnterLobby">Go to lobby</button>
+			</div>
+		} else if (_formState == FormState.EnteringLobby)
+		{
+			<div class="text-white">
+				Entering lobby...
+			</div>
+		}
+		else if (_formState == FormState.Room)
+		{
+			<button>Back</button>
+			<button>Refresh rooms</button>
+			<div class="d-grid justify-content-center rooms-wrapper gap-1" style="grid-template-columns: repeat(5,200px)">
+				@if(_gameStates is not null)
+				{
+
+					@foreach (var room in _gameStates)
+					{
+						<div class="pt-2 pb-4 px-4 room" style="background: rgba(255,255,255,.9);" @onclick="async () => await SelectRoom(room.Room)">
+							<h5 class="pb-2"><strong>Room @room.Room</strong></h5>
+							<ul class="px-2">
+								@foreach(var player in room.Players)
+								{
+									<li>@player.Name</li>
+								}
+								@for(int i = room.Players.Count; i < 4; i++)
+								{
+									<li></li>
+								}
+							</ul>
+						</div>
+					}
+					
+				}
+			</div>
+		} else if (_formState == FormState.EnteringRoom)
+		{
+			<div class="text-white">
+				Entering room @_loginRequest.Room
+			</div>
+		}
+
 	</div>
 </EditForm>
 
@@ -38,6 +72,16 @@
 		public string ApiKey { get; set; } = string.Empty;
 	}
 
+	enum FormState
+	{
+		Name,
+		Room,
+		EnteringLobby,
+		EnteringRoom
+	}
+
+	FormState _formState = FormState.Name;
+
 	[Parameter]
 	public EventCallback<(string Name, int Room)?> OnLogin { get; set; }
 
@@ -45,6 +89,42 @@
 	public EventCallback<Exception> OnException { get; set; }
 
 	LoginRequest _loginRequest = new();
+
+	GameState[]? _gameStates;
+
+	async Task SelectRoom(int room)
+	{
+		_formState = FormState.EnteringRoom;
+		await InvokeAsync(StateHasChanged);
+		_loginRequest.Room = room;
+		await Submit();
+	}
+
+	async Task EnterLobby()
+	{
+		try
+		{
+			_formState = FormState.EnteringLobby;
+			await InvokeAsync(StateHasChanged);
+			var rooms = await DataService.GetRooms();
+			if (rooms is null)
+			{
+				throw new Exception("No rooms were found");
+			}
+			else
+			{
+				_gameStates = rooms;
+				_formState = FormState.Room;
+			}
+
+		}
+		catch (Exception ex)
+		{
+			_formState = FormState.Name;
+			if (OnException.HasDelegate) await OnException.InvokeAsync(ex);
+			else throw;
+		}
+	}
 
 	async Task Submit()
 	{

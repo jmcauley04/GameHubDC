@@ -10,6 +10,7 @@ public class MongoDbService
 	const string ENDPOINT = "https://us-east-2.aws.data.mongodb-api.com/app/data-giljf/endpoint/data/v1/action";
 	const string GETENDPOINT = "https://us-east-2.aws.data.mongodb-api.com/app/data-giljf/endpoint/get";
 	const string UPSERTENDPOINT = "https://us-east-2.aws.data.mongodb-api.com/app/data-giljf/endpoint/Upsert";
+	const string GETROOMS = "https://us-east-2.aws.data.mongodb-api.com/app/data-giljf/endpoint/rooms";
 
 
 	public static void SetAPIKey(string apiKey)
@@ -97,6 +98,14 @@ public class MongoDbService
 			    ""filter"": {{ {filter} }}
 			}}");
 		RestResponse response = await client.PostAsync(request);
+		return response.Content;
+	}
+
+	public async Task<string?> GetRooms()
+	{
+		var client = new RestClient(GETROOMS);
+		var request = GetRequest();
+		RestResponse response = await client.GetAsync(request);
 		return response.Content;
 	}
 }

@@ -54,6 +54,14 @@ public class DataService
 		}
 	}
 
+	public async Task<GameState[]?> GetRooms()
+	{
+		var stateString = await _mongoDbService.GetRooms();
+
+		if (stateString is null) return Enumerable.Empty<GameState>().ToArray();
+		return System.Text.Json.JsonSerializer.Deserialize<GameState[]>(stateString);
+	}
+
 	public async Task LeaveRoom(int roomId, string name)
 	{
 	}

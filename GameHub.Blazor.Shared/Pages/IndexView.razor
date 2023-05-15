@@ -8,9 +8,7 @@
 @if (_loginState is null)
 {
 	<div class="bg-div position-relative d-grid" style="background-image: url(_content/GameHub.Blazor.Shared/images/pool-bg-img.jpg);">
-		<div style="width: 30vw; place-self: center;">
-			<LoginBox @ref="_loginBox" OnLogin="OnLogin" OnException="OnException" />
-		</div>
+		<LoginBox @ref="_loginBox" OnLogin="OnLogin" OnException="OnException" />
 	</div>
 }
 else
@@ -59,7 +57,7 @@ else
 				</div>
 				<div class="d-grid mt-3" style="grid-template-columns: 300px 1fr 300px;">
 					<div></div>
-					<div class="d-grid gap-2">
+					<div class="d-grid gap-2" hidden="@Player.Hand.All(x => x != 1)">
 						<h5>Accountability Target</h5>
 						<ul class="d-flex flex-wrap gap-2">
 							@foreach (var card in Cards.Where(x => x.Value > 1))
