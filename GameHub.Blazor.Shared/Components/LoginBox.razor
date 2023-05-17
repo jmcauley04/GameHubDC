@@ -26,31 +26,34 @@
 		}
 		else if (_formState == FormState.Room)
 		{
-			<button>Back</button>
-			<button>Refresh rooms</button>
-			<div class="d-grid justify-content-center rooms-wrapper gap-1" style="grid-template-columns: repeat(5,200px)">
+			<button class="btn btn-outline-light" @onclick="Back">Back</button>
+			<div class="d-grid justify-content-center rooms-wrapper gap-1 my-2" style="grid-template-columns: repeat(5,200px)">
 				@if(_gameStates is not null)
 				{
-
-					@foreach (var room in _gameStates)
+					@for(int i = 1; i <= 20; i++)
 					{
-						<div class="pt-2 pb-4 px-4 room" style="background: rgba(255,255,255,.9);" @onclick="async () => await SelectRoom(room.Room)">
-							<h5 class="pb-2"><strong>Room @room.Room</strong></h5>
+						var local_i = i;
+						var gameRoom = _gameStates.SingleOrDefault(x => x.Room == local_i);
+						var players = gameRoom?.Players ?? Enumerable.Empty<Player>();
+
+						<div class="pt-2 pb-4 px-4 room" style="background: rgba(255,255,255,.9);" @onclick="async () => await SelectRoom(local_i)">
+							<h5 class="pb-2"><strong>Room @local_i</strong></h5>
 							<ul class="px-2">
-								@foreach(var player in room.Players)
+								@foreach (var player in players)
 								{
 									<li>@player.Name</li>
 								}
-								@for(int i = room.Players.Count; i < 4; i++)
+								@for (int c = players.Count(); c < 4; c++)
 								{
 									<li></li>
 								}
 							</ul>
 						</div>
+						
 					}
-					
 				}
 			</div>
+			<button class="btn btn-outline-light" @onclick="RefreshRooms">Refresh rooms</button>
 		} else if (_formState == FormState.EnteringRoom)
 		{
 			<div class="text-white">
@@ -100,6 +103,17 @@
 		await Submit();
 	}
 
+	async Task Back()
+	{
+		_formState = FormState.Name;
+		await Task.CompletedTask;
+	}
+
+	async Task RefreshRooms()
+	{
+		await EnterLobby();
+	}
+
 	async Task EnterLobby()
 	{
 		try
@@ -107,16 +121,8 @@
 			_formState = FormState.EnteringLobby;
 			await InvokeAsync(StateHasChanged);
 			var rooms = await DataService.GetRooms();
-			if (rooms is null)
-			{
-				throw new Exception("No rooms were found");
-			}
-			else
-			{
-				_gameStates = rooms;
-				_formState = FormState.Room;
-			}
-
+			_gameStates = rooms ?? new GameState[0];
+			_formState = FormState.Room;
 		}
 		catch (Exception ex)
 		{

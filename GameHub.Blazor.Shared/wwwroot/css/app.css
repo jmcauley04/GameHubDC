@@ -22,6 +22,7 @@ html, body {
 .rooms-wrapper > .room {
     transition: transform ease-in-out .2s, opacity linear .2s;
     border-radius: 5px;
+    cursor: pointer;
 }
 
 .rooms-wrapper:has(.room:hover) .room:not(:hover) {
